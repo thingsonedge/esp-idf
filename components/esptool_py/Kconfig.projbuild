@@ -220,4 +220,16 @@ config MONITOR_BAUD
     default 2000000 if MONITOR_BAUD_2MB
     default MONITOR_BAUD_OTHER_VAL if MONITOR_BAUD_OTHER
 
+choice BOARDTYPE
+    prompt "Board type"
+    default BOARDTYPE_TOE
+    help
+        Define the board type to which firware can be flashed.
+
+config  BOARDTYPE_TOE
+    bool "TOE"
+config  BOARDTYPE_ESP32DEV
+    bool "ESP32DEV"
+endchoice
+
 endmenu
