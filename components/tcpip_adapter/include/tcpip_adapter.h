@@ -526,7 +526,7 @@ esp_err_t tcpip_adapter_dhcpc_start(tcpip_adapter_if_t tcpip_if);
  *      - ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STOPPED
  *      - ESP_ERR_TCPIP_ADAPTER_IF_NOT_READY
  */
-esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if);
+esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if, uint8_t erase_nvs);
 
 /**
  * @brief  Receive an Ethernet frame from the Ethernet interface

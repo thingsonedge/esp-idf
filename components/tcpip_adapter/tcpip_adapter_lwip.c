@@ -70,6 +70,7 @@ static sys_sem_t api_lock_sem = NULL;
 extern sys_thread_t g_lwip_task;
 static const char* TAG = "tcpip_adapter";
 
+
 static void tcpip_adapter_api_cb(void* api_msg)
 {
     tcpip_adapter_api_msg_t *msg = (tcpip_adapter_api_msg_t*)api_msg;
@@ -871,6 +872,8 @@ static void tcpip_adapter_dhcpc_cb(struct netif *netif)
     tcpip_adapter_ip_info_t *ip_info = NULL;
     tcpip_adapter_if_t tcpip_if;
 
+    ESP_LOGI("DHCP", "tcpip_adapter_dhcpc_cb");
+
     if (!netif) {
         ESP_LOGD(TAG, "null netif=%p", netif);
         return;
@@ -1047,20 +1050,19 @@ static esp_err_t tcpip_adapter_dhcpc_start_api(tcpip_adapter_api_msg_t * msg)
     return tcpip_adapter_dhcpc_start(msg->tcpip_if);
 }
 
-esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if)
+esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if, uint8_t erase_nvs)
 {
-    TCPIP_ADAPTER_IPC_CALL(tcpip_if, 0, 0, 0, tcpip_adapter_dhcpc_stop_api);
+    TCPIP_ADAPTER_IPC_CALL(tcpip_if, 0, 0, (void *)erase_nvs, tcpip_adapter_dhcpc_stop_api);
 
     if ((tcpip_if != TCPIP_ADAPTER_IF_STA && tcpip_if != TCPIP_ADAPTER_IF_ETH)  || tcpip_if >= TCPIP_ADAPTER_IF_MAX) {
         ESP_LOGD(TAG, "dhcp client invalid if=%d", tcpip_if);
         return ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS;
     }
-
     if (dhcpc_status[tcpip_if] == TCPIP_ADAPTER_DHCP_STARTED) {
         struct netif *p_netif = esp_netif[tcpip_if];
 
         if (p_netif != NULL) {
-            dhcp_stop(p_netif);
+	    dhcp_stop(p_netif);
             tcpip_adapter_reset_ip_info(tcpip_if);
             tcpip_adapter_start_ip_lost_timer(tcpip_if);
         } else {
@@ -1075,14 +1077,15 @@ esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if)
     ESP_LOGD(TAG, "dhcp client stop successfully");
     dhcpc_status[tcpip_if] = TCPIP_ADAPTER_DHCP_STOPPED;
 
-    LWIP_DHCP_IP_ADDR_ERASE();
-    
+    if (erase_nvs) {
+        LWIP_DHCP_IP_ADDR_ERASE();
+    }
     return ESP_OK;
 }
 
 static esp_err_t tcpip_adapter_dhcpc_stop_api(tcpip_adapter_api_msg_t * msg)
 {
-    return tcpip_adapter_dhcpc_stop(msg->tcpip_if);
+    return tcpip_adapter_dhcpc_stop(msg->tcpip_if, (uint8_t)msg->data);
 }
 
 esp_err_t tcpip_adapter_eth_input(void *buffer, uint16_t len, void *eb)
