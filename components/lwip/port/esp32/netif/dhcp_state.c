@@ -22,6 +22,9 @@
 #include "tcpip_adapter.h"
 #include "netif/dhcp_state.h"
 
+#include "esp_log.h"
+
+
 #define DHCP_NAMESPACE "dhcp_state"
 #define VALID_NETIF_ID(id) ((id < ESP_IF_MAX) && (id != ESP_IF_WIFI_AP))
 
@@ -39,6 +42,7 @@ bool dhcp_ip_addr_restore(void *netif)
     struct dhcp *dhcp = netif_dhcp_data(net);
     esp_interface_t netif_id = tcpip_adapter_get_esp_if(net);
 
+    ESP_LOGI("DHCP_ESP", "dhcp_ip_addr_restore");
     if(VALID_NETIF_ID(netif_id)) {
         uint32_t *ip_addr = &dhcp->offered_ip_addr.addr;
         if (nvs_open(DHCP_NAMESPACE, NVS_READONLY, &nvs) == ESP_OK) {
@@ -60,6 +64,8 @@ void dhcp_ip_addr_store(void *netif)
     uint32_t ip_addr = dhcp->offered_ip_addr.addr;
     esp_interface_t netif_id = tcpip_adapter_get_esp_if(net);
 
+    ESP_LOGI("DHCP_ESP", "dhcp_ip_addr_store");
+
     if(VALID_NETIF_ID(netif_id)) {
         if (restored_ip_addr[netif_id] != ip_addr) {
             if (nvs_open(DHCP_NAMESPACE, NVS_READWRITE, &nvs) == ESP_OK) {
@@ -76,6 +82,8 @@ void dhcp_ip_addr_erase(void *netif)
     nvs_handle nvs;
     struct netif *net = (struct netif *)netif;
     esp_interface_t netif_id = tcpip_adapter_get_esp_if(net);
+
+    ESP_LOGI("DHCP_ESP", "dhcp_ip_addr_erase");
 
     if(VALID_NETIF_ID(netif_id)) {
         if (nvs_open(DHCP_NAMESPACE, NVS_READWRITE, &nvs) == ESP_OK) {
