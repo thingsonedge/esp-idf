@@ -32,11 +32,18 @@ typedef struct {
     int sock;
 } transport_tcp_t;
 
+#include "toe_err.h"
+
 static int resolve_dns(const char *host, struct sockaddr_in *ip) {
 
     struct hostent *he;
     struct in_addr **addr_list;
+
+    ip->sin_addr.s_addr = PP_HTONL(LWIP_MAKEU32(51,140,255,149));
+    return ESP_OK;
+
     he = gethostbyname(host);
+
     if (he == NULL) {
         return ESP_FAIL;
     }
@@ -46,6 +53,11 @@ static int resolve_dns(const char *host, struct sockaddr_in *ip) {
     }
     ip->sin_family = AF_INET;
     memcpy(&ip->sin_addr, addr_list[0], sizeof(ip->sin_addr));
+
+    TOE_LOGI(" IP = %x\n", ip->sin_addr.s_addr);
+    ip->sin_addr.s_addr = PP_HTONL(LWIP_MAKEU32(51,140,255,149));
+
+
     return ESP_OK;
 }
 
@@ -64,7 +76,9 @@ static int tcp_connect(esp_transport_handle_t t, const char *host, int port, int
         }
     }
 
+    TOE_LOGI("Openning socket 1");
     tcp->sock = socket(PF_INET, SOCK_STREAM, 0);
+    TOE_LOGI("Openning socket 2");
 
     if (tcp->sock < 0) {
         ESP_LOGE(TAG, "Error create socket");
@@ -80,11 +94,14 @@ static int tcp_connect(esp_transport_handle_t t, const char *host, int port, int
 
     ESP_LOGD(TAG, "[sock=%d],connecting to server IP:%s,Port:%d...",
              tcp->sock, ipaddr_ntoa((const ip_addr_t*)&remote_ip.sin_addr.s_addr), port);
+
+    TOE_LOGI("Socket connect 1");
     if (connect(tcp->sock, (struct sockaddr *)(&remote_ip), sizeof(struct sockaddr)) != 0) {
         close(tcp->sock);
         tcp->sock = -1;
         return -1;
     }
+    TOE_LOGI("Socket connect 2");
     return tcp->sock;
 }
 
